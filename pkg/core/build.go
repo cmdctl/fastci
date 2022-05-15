@@ -2,6 +2,7 @@ package core
 
 import (
 	docker "github.com/fsouza/go-dockerclient"
+	"github.com/lensesio/tableprinter"
 	"io"
 )
 
@@ -17,12 +18,25 @@ const (
 
 // Build is a single build in the build queue.
 type Build struct {
-	Name         string
-	Pipeline     *Pipeline
-	State        BuildState
-	Volume       string
-	OutputStream io.Writer
-	ErrorStream  io.Writer
+	Name         string     `json:"name"`
+	Pipeline     *Pipeline  `json:"pipeline"`
+	State        BuildState `json:"state"`
+	Volume       string     `json:"volume"`
+	OutputStream io.Writer  `json:"-"`
+	ErrorStream  io.Writer  `json:"-"`
+}
+
+func (b *Build) PrintResult(writer io.Writer) error {
+	_, err := writer.Write([]byte(b.Name + ": " + b.State.String() + "\n"))
+	if err != nil {
+		return err
+	}
+	printer := tableprinter.New(writer)
+	printer.BorderTop, printer.BorderBottom, printer.BorderLeft, printer.BorderRight = true, true, true, true
+	printer.ColumnSeparator = "│"
+	printer.RowSeparator = "─"
+	printer.Print(b.Pipeline.Steps)
+	return nil
 }
 
 // NewBuild creates a new build.
@@ -62,8 +76,8 @@ func (b BuildState) String() string {
 }
 
 // AllStepsSuccessful returns true if all steps in the pipeline are successful.
-func (build *Build) AllStepsSuccessful() bool {
-	for _, step := range build.Pipeline.Steps {
+func (b *Build) AllStepsSuccessful() bool {
+	for _, step := range b.Pipeline.Steps {
 		if !step.Successful {
 			return false
 		}
@@ -72,11 +86,11 @@ func (build *Build) AllStepsSuccessful() bool {
 }
 
 // NextStep returns the next step to be executed.
-func (build *Build) NextStep() (step *Step, done bool) {
-	if build.AllStepsSuccessful() {
+func (b *Build) NextStep() (step *Step, done bool) {
+	if b.AllStepsSuccessful() {
 		return nil, true
 	}
-	for _, step := range build.Pipeline.Steps {
+	for _, step := range b.Pipeline.Steps {
 		if !step.Completed {
 			return step, false
 		}
@@ -85,14 +99,13 @@ func (build *Build) NextStep() (step *Step, done bool) {
 }
 
 // Run returns the next step to be executed.
-func (build *Build) Run(client *docker.Client) {
-	switch build.State {
+func (b *Build) Run(client *docker.Client) {
+	switch b.State {
 	case READY:
-		prepare(client, build)
+		prepare(client, b)
 	case RUNNING:
-		run(client, build)
+		run(client, b)
 	}
-	return
 }
 
 func run(client *docker.Client, build *Build) {

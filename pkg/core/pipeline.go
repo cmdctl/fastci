@@ -2,7 +2,7 @@ package core
 
 // Pipeline is a collection of steps.
 type Pipeline struct {
-	Steps []*Step
+	Steps []*Step `json:"steps"`
 }
 
 // NewPipeline creates a new pipeline.

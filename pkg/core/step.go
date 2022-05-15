@@ -10,24 +10,32 @@ import (
 
 // Step is a single step in a pipeline.
 type Step struct {
-	Successful   bool
-	Completed    bool
-	Name         string
-	Image        string
-	Commands     []string
-	Errors       []string
-	Volume       string
-	OutputStream io.Writer
-	ErrorStream  io.Writer
+	Successful   bool      `json:"successful" header:"successful"`
+	Completed    bool      `json:"completed" header:"completed"`
+	Name         string    `json:"name" header:"name"`
+	Image        string    `json:"image" header:"image"`
+	ImageTag     string    `json:"image_tag" header:"image_tag"`
+	Commands     []string  `json:"commands" header:"commands"`
+	Errors       []string  `json:"errors" header:"errors"`
+	Volume       string    `json:"volume"`
+	OutputStream io.Writer `json:"-"`
+	ErrorStream  io.Writer `json:"-"`
 }
 
 // NewStep creates a new step.
 func NewStep(name, image string, commands []string) *Step {
+	tag := "latest"
+	split := strings.Split(image, ":")
+	if len(split) > 1 {
+		image = split[0]
+		tag = split[1]
+	}
 	return &Step{
 		Successful: false,
 		Completed:  false,
 		Name:       name,
 		Image:      image,
+		ImageTag:   tag,
 		Commands:   commands,
 		Errors:     []string{},
 	}
@@ -55,10 +63,48 @@ func (s *Step) Run(client *docker.Client) error {
 		},
 	})
 	if err != nil {
-		s.Successful = false
-		s.Completed = true
-		s.Errors = append(s.Errors, err.Error())
-		return err
+		if err == docker.ErrNoSuchImage {
+			err := client.PullImage(docker.PullImageOptions{
+				Repository: s.Image,
+				Tag:        s.ImageTag,
+			}, docker.AuthConfiguration{})
+			if err != nil {
+				s.Successful = false
+				s.Completed = true
+				s.Errors = append(s.Errors, err.Error())
+				return err
+			}
+			container, err = client.CreateContainer(docker.CreateContainerOptions{
+				Name: s.Name,
+				HostConfig: &docker.HostConfig{
+					Binds: []string{s.Volume + ":/app"},
+				},
+				Config: &docker.Config{
+					Image: s.Image,
+					Cmd:   []string{"/bin/sh", "-c", strings.Join(s.Commands, " ")},
+					Labels: map[string]string{
+						"fastci": "true",
+					},
+					WorkingDir: "/app",
+
+					Env: []string{
+						"FASTCI_STEP_NAME=" + s.Name,
+						"FASTCI_STEP_IMAGE=" + s.Image,
+					},
+				},
+			})
+			if err != nil {
+				s.Successful = false
+				s.Completed = true
+				s.Errors = append(s.Errors, err.Error())
+				return err
+			}
+		} else {
+			s.Successful = false
+			s.Completed = true
+			s.Errors = append(s.Errors, err.Error())
+			return err
+		}
 	}
 	err = client.StartContainer(container.ID, nil)
 	if err != nil {
