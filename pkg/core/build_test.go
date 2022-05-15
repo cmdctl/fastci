@@ -67,7 +67,7 @@ func CaseLogCollection(t *testing.T) {
 	step1 := NewStep("logCollection1", "ubuntu", []string{"echo", "hello"})
 	step2 := NewStep("logCollection2", "ubuntu", []string{"echo", "world"})
 	pipeline := NewPipeline(step1, step2)
-	build := NewBuildWithLogStreams("testLogCollection", pipeline, stdOut, stdErr)
+	build := NewBuildWithOutputStreams("testLogCollection", pipeline, stdOut, stdErr)
 	build.Run(client)
 	assert.Equal(t, COMPLETED.String(), build.State.String())
 	assert.Equal(t, true, build.Pipeline.Steps[0].Successful)

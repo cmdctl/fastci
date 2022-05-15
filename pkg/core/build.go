@@ -48,8 +48,8 @@ func NewBuild(name string, pipeline *Pipeline) *Build {
 	}
 }
 
-// NewBuildWithLogStreams creates a new build with the given streams for standard and error outputs.
-func NewBuildWithLogStreams(name string, pipeline *Pipeline, outputStream, errorStream io.Writer) *Build {
+// NewBuildWithOutputStreams creates a new build with the given streams for standard and error outputs.
+func NewBuildWithOutputStreams(name string, pipeline *Pipeline, outputStream, errorStream io.Writer) *Build {
 	return &Build{
 		Name:         name,
 		Pipeline:     pipeline,
@@ -108,6 +108,7 @@ func (b *Build) Run(client *docker.Client) {
 	}
 }
 
+// helper function to run a build
 func run(client *docker.Client, build *Build) {
 	step, done := build.NextStep()
 	if done {
@@ -129,6 +130,7 @@ func run(client *docker.Client, build *Build) {
 	build.Run(client)
 }
 
+// helper function to prepare a build
 func prepare(client *docker.Client, build *Build) {
 	_, done := build.NextStep()
 	if done {
