@@ -3,19 +3,22 @@ package core
 import (
 	"errors"
 	docker "github.com/fsouza/go-dockerclient"
+	"io"
 	"strconv"
 	"strings"
 )
 
 // Step is a single step in a pipeline.
 type Step struct {
-	Successful bool
-	Completed  bool
-	Name       string
-	Image      string
-	Commands   []string
-	Errors     []string
-	Volume     string
+	Successful   bool
+	Completed    bool
+	Name         string
+	Image        string
+	Commands     []string
+	Errors       []string
+	Volume       string
+	OutputStream io.Writer
+	ErrorStream  io.Writer
 }
 
 // NewStep creates a new step.
@@ -58,6 +61,21 @@ func (s *Step) Run(client *docker.Client) error {
 		return err
 	}
 	err = client.StartContainer(container.ID, nil)
+	if err != nil {
+		s.Successful = false
+		s.Completed = true
+		s.Errors = append(s.Errors, err.Error())
+		return err
+	}
+	err = client.Logs(docker.LogsOptions{
+		Container:    container.ID,
+		OutputStream: s.OutputStream,
+		ErrorStream:  s.ErrorStream,
+		Stdout:       true,
+		Stderr:       true,
+		Follow:       true,
+		Tail:         "all",
+	})
 	if err != nil {
 		s.Successful = false
 		s.Completed = true

@@ -5,6 +5,15 @@ import (
 	"testing"
 )
 
+type MockWriter struct {
+	Content []byte
+}
+
+func (m *MockWriter) Write(p []byte) (n int, err error) {
+	m.Content = append(m.Content, p...)
+	return len(p), nil
+}
+
 func Cleanup(t *testing.T) {
 	dockerClient, _ := docker.NewClient("unix:///var/run/docker.sock")
 	containers, err := dockerClient.ListContainers(docker.ListContainersOptions{
