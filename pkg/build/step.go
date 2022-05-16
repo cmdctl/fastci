@@ -34,7 +34,7 @@ func NewStep(name, image string, commands []string) *Step {
 }
 
 // toImageAndTag parses the image into name and tag.
-func toImageAndTag(image string) (tag string, name string) {
+func toImageAndTag(image string) (name string, tag string) {
 	tag = "latest"
 	split := strings.Split(image, ":")
 	if len(split) > 1 {
