@@ -1,4 +1,4 @@
-package core
+package build
 
 import (
 	"github.com/cmdctl/fastci/test"

@@ -1,8 +1,8 @@
-package core
+package build
 
 // Pipeline is a collection of steps.
 type Pipeline struct {
-	Steps []*Step `json:"steps"`
+	Steps []*Step `json:"steps" yaml:"steps"`
 }
 
 // NewPipeline creates a new pipeline.

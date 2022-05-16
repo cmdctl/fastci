@@ -1,4 +1,4 @@
-package core
+package build
 
 import (
 	"errors"
@@ -10,35 +10,38 @@ import (
 
 // Step is a single step in a pipeline.
 type Step struct {
-	Successful   bool      `json:"successful" header:"successful"`
-	Completed    bool      `json:"completed" header:"completed"`
-	Name         string    `json:"name" header:"name"`
-	Image        string    `json:"image" header:"image"`
-	ImageTag     string    `json:"image_tag" header:"image_tag"`
-	Commands     []string  `json:"commands" header:"commands"`
-	Errors       []string  `json:"errors" header:"errors"`
-	Volume       string    `json:"volume"`
-	OutputStream io.Writer `json:"-"`
-	ErrorStream  io.Writer `json:"-"`
+	Successful   bool      `json:"successful" yaml:"successful" header:"successful"`
+	Completed    bool      `json:"completed" yaml:"completed" header:"completed"`
+	Name         string    `json:"name" yaml:"name" header:"name"`
+	Image        string    `json:"image" yaml:"image" header:"image"`
+	Commands     []string  `json:"commands" yaml:"commands" header:"commands"`
+	Errors       []string  `json:"errors" yaml:"errors" header:"errors"`
+	Volume       string    `json:"volume" yaml:"volume"`
+	OutputStream io.Writer `json:"-" yaml:"-"`
+	ErrorStream  io.Writer `json:"-" yaml:"-"`
 }
 
 // NewStep creates a new step.
 func NewStep(name, image string, commands []string) *Step {
-	tag := "latest"
-	split := strings.Split(image, ":")
-	if len(split) > 1 {
-		image = split[0]
-		tag = split[1]
-	}
 	return &Step{
 		Successful: false,
 		Completed:  false,
 		Name:       name,
 		Image:      image,
-		ImageTag:   tag,
 		Commands:   commands,
 		Errors:     []string{},
 	}
+}
+
+// toImageAndTag parses the image into name and tag.
+func toImageAndTag(image string) (tag string, name string) {
+	tag = "latest"
+	split := strings.Split(image, ":")
+	if len(split) > 1 {
+		name = split[0]
+		tag = split[1]
+	}
+	return name, tag
 }
 
 // Run executes the step.
@@ -64,9 +67,10 @@ func (s *Step) Run(client *docker.Client) error {
 	})
 	if err != nil {
 		if err == docker.ErrNoSuchImage {
+			image, tag := toImageAndTag(s.Image)
 			err := client.PullImage(docker.PullImageOptions{
-				Repository: s.Image,
-				Tag:        s.ImageTag,
+				Repository: image,
+				Tag:        tag,
 			}, docker.AuthConfiguration{})
 			if err != nil {
 				s.Successful = false

@@ -1,4 +1,4 @@
-package core
+package build
 
 import (
 	docker "github.com/fsouza/go-dockerclient"
@@ -6,11 +6,11 @@ import (
 	"io"
 )
 
-// BuildState represents the state of a build.
-type BuildState int
+// State BuildState represents the state of a build.
+type State int
 
 const (
-	READY BuildState = iota
+	READY State = iota
 	RUNNING
 	COMPLETED
 	FAILED
@@ -18,12 +18,12 @@ const (
 
 // Build is a single build in the build queue.
 type Build struct {
-	Name         string     `json:"name"`
-	Pipeline     *Pipeline  `json:"pipeline"`
-	State        BuildState `json:"state"`
-	Volume       string     `json:"volume"`
-	OutputStream io.Writer  `json:"-"`
-	ErrorStream  io.Writer  `json:"-"`
+	Name         string    `json:"name" yaml:"name"`
+	Pipeline     *Pipeline `json:"pipeline" yaml:"pipeline"`
+	State        State     `json:"state" yaml:"state"`
+	Volume       string    `json:"volume" yaml:"volume"`
+	OutputStream io.Writer `json:"-" yaml:"-"`
+	ErrorStream  io.Writer `json:"-" yaml:"-"`
 }
 
 func (b *Build) PrintResult(writer io.Writer) error {
@@ -60,7 +60,7 @@ func NewBuildWithOutputStreams(name string, pipeline *Pipeline, outputStream, er
 }
 
 // String returns the string representation of a BuildState.
-func (b BuildState) String() string {
+func (b State) String() string {
 	switch b {
 	case READY:
 		return "READY"

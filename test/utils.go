@@ -5,15 +5,18 @@ import (
 	"testing"
 )
 
+// MockWriter is a mock implementation of io.Writer
 type MockWriter struct {
 	Content []byte
 }
 
+// Write is a mock implementation of io.Writer.Write
 func (m *MockWriter) Write(p []byte) (n int, err error) {
 	m.Content = append(m.Content, p...)
 	return len(p), nil
 }
 
+// Cleanup cleans all containers and images from the test environment.
 func Cleanup(t *testing.T) {
 	dockerClient, _ := docker.NewClient("unix:///var/run/docker.sock")
 	containers, err := dockerClient.ListContainers(docker.ListContainersOptions{
