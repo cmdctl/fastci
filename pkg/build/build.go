@@ -20,8 +20,8 @@ const (
 type Build struct {
 	Name         string    `json:"name" yaml:"name"`
 	Pipeline     *Pipeline `json:"pipeline" yaml:"pipeline"`
-	State        State     `json:"state" yaml:"state"`
-	Volume       string    `json:"volume" yaml:"volume"`
+	State        State     `json:"state" yaml:"-"`
+	Volume       string    `json:"volume" yaml:"-"`
 	OutputStream io.Writer `json:"-" yaml:"-"`
 	ErrorStream  io.Writer `json:"-" yaml:"-"`
 }

@@ -10,13 +10,13 @@ import (
 
 // Step is a single step in a pipeline.
 type Step struct {
-	Successful   bool      `json:"successful" yaml:"successful" header:"successful"`
-	Completed    bool      `json:"completed" yaml:"completed" header:"completed"`
+	Successful   bool      `json:"successful" yaml:"-" header:"successful"`
+	Completed    bool      `json:"completed" yaml:"-" header:"completed"`
 	Name         string    `json:"name" yaml:"name" header:"name"`
 	Image        string    `json:"image" yaml:"image" header:"image"`
 	Commands     []string  `json:"commands" yaml:"commands" header:"commands"`
-	Errors       []string  `json:"errors" yaml:"errors" header:"errors"`
-	Volume       string    `json:"volume" yaml:"volume"`
+	Errors       []string  `json:"errors" yaml:"-" header:"errors"`
+	Volume       string    `json:"volume" yaml:"-"`
 	OutputStream io.Writer `json:"-" yaml:"-"`
 	ErrorStream  io.Writer `json:"-" yaml:"-"`
 }
@@ -53,7 +53,7 @@ func (s *Step) Run(client *docker.Client) error {
 		},
 		Config: &docker.Config{
 			Image: s.Image,
-			Cmd:   []string{"/bin/sh", "-c", strings.Join(s.Commands, " ")},
+			Cmd:   []string{"/bin/sh", "-c", strings.Join(s.Commands, "\n")},
 			Labels: map[string]string{
 				"fastci": "true",
 			},

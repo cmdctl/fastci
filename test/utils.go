@@ -1,9 +1,13 @@
 package test
 
 import (
+	"embed"
 	docker "github.com/fsouza/go-dockerclient"
 	"testing"
 )
+
+//go:embed data/*.yaml
+var YamlTestFS embed.FS
 
 // MockWriter is a mock implementation of io.Writer
 type MockWriter struct {

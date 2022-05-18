@@ -1,0 +1,20 @@
+version: '1'
+
+build:
+  name: build app
+  pipeline:
+    steps:
+      - name: checkout code
+        image: ubuntu:14.04
+        commands:
+          - git clone git@github.com:cmdctl/fastci.git
+
+      - name: install dependencies
+        image: ubuntu:14.04
+        commands:
+          - go mod tidy
+
+      - name: build
+        image: ubuntu:14.04
+        commands:
+          - go build -o /app/app
