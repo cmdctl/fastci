@@ -10,7 +10,7 @@ type Config struct {
 	Build   Build  `yaml:"build"`
 }
 
-// FromYaml parses a yaml file content string into a Config struct
+// FromYaml parses a yaml file as byte slice into a Config struct
 func FromYaml(content []byte) (*Config, error) {
 	var config Config
 	err := yaml.Unmarshal(content, &config)
