@@ -40,6 +40,8 @@ func toImageAndTag(image string) (name string, tag string) {
 	if len(split) > 1 {
 		name = split[0]
 		tag = split[1]
+	} else {
+		name = image
 	}
 	return name, tag
 }
